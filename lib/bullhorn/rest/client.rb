@@ -25,6 +25,7 @@ class Client
   include Bullhorn::Rest::Entities::CorporationDepartment
   include Bullhorn::Rest::Entities::Country
   include Bullhorn::Rest::Entities::CustomAction
+  include Bullhorn::Rest::Entities::File
   include Bullhorn::Rest::Entities::JobOrder
   include Bullhorn::Rest::Entities::JobSubmission
   include Bullhorn::Rest::Entities::Note
@@ -64,18 +65,18 @@ class Client
 
   def parse_to_candidate(resume_text)
       path = "resume/parseToCandidateViaJson?format=text"
-      encodedResume = {"resume" => resume_text}.to_json   
+      encodedResume = {"resume" => resume_text}.to_json
       res = conn.post path, encodedResume
 
      JSON.parse(res.body)
-  end 
+  end
 
   def parse_to_candidate_as_file(format, pop, attributes)
-      path = "resume/parseToCandidate?format=#{format}&populateDescription=#{pop}" 
+      path = "resume/parseToCandidate?format=#{format}&populateDescription=#{pop}"
       attributes['file'] = Faraday::UploadIO.new(attributes['file'], attributes['ct'])
       res = conn.post path, attributes
      JSON.parse(res.body)
-  end 
+  end
 
 
 end
