@@ -8,7 +8,7 @@ module Bullhorn
 
       # http://developer.bullhorn.com/sites/default/files/BullhornRESTAPI_0.pdf
       module Base
-        DEFAULT_OPTIONS = { fields: 'id' }
+        DEFAULT_OPTIONS = { fields: 'id', count: 50 }
 
         def entity
           @entity || self.name.demodulize.underscore
@@ -54,7 +54,7 @@ module Bullhorn
             end
 
             define_method("department_#{plural}") do |options=DEFAULT_OPTIONS|
-              params = {:count => '100'}.merge(options)
+              params = DEFAULT_OPTIONS.merge(options)
               path = "department#{name_plural}"
 
               res = @conn.get path, params
@@ -64,7 +64,7 @@ module Bullhorn
             end
 
             define_method("user_#{plural}") do |options=DEFAULT_OPTIONS|
-              params = {:count => '100'}.merge(options)
+              params = DEFAULT_OPTIONS.merge(options)
               path = "my#{name_plural}"
               res = @conn.get path, params
               obj = decorate_response JSON.parse(res.body)
@@ -81,7 +81,7 @@ module Bullhorn
           end
 
           define_method("search_#{plural}") do |options=DEFAULT_OPTIONS|
-            params = {:count => '500'}.merge(options)
+            params = DEFAULT_OPTIONS.merge(options)
             path = "search/#{name}"
             res = @conn.get path, params
             obj = decorate_response JSON.parse(res.body)
@@ -90,7 +90,7 @@ module Bullhorn
 
           define_method("query_#{plural}") do |options=DEFAULT_OPTIONS|
             # params = {:fields => '*', :count => '500', :orderBy => 'name'}.merge(options)
-            params = {:count => '500'}.merge(options)
+            params = DEFAULT_OPTIONS.merge(options)
             path = "query/#{name}"
             res = @conn.get path, params
             obj = decorate_response JSON.parse(res.body)
@@ -98,7 +98,7 @@ module Bullhorn
           end
 
           define_method(entity) do |id, options=DEFAULT_OPTIONS|
-            params = {fields: options[:fields] }.merge(options)
+            params = DEFAULT_OPTIONS.merge(options)
             path = "entity/#{name}/#{Array.wrap(id).join(',')}"
             if assoc = options.delete(:association)
               path += "/#{assoc}"
@@ -141,6 +141,13 @@ module Bullhorn
             define_method("put_#{entity}_file") do |id, attributes = {}|
               path = "file/#{name}/#{id}"
               res = conn.put path, attributes
+              Hashie::Mash.new JSON.parse(res.body)
+            end
+
+            define_method("#{entity}_file_attachments") do |id, options=DEFAULT_OPTIONS|
+              params = DEFAULT_OPTIONS.merge(options)
+              path = "entity/#{name}/#{id}/fileAttachments"
+              res = conn.get path, params
               Hashie::Mash.new JSON.parse(res.body)
             end
           end
