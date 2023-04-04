@@ -120,7 +120,8 @@ module Bullhorn
               if ids = options.delete(:association_ids)
                 path += "/#{ids.to_s}"
               end
-              res = conn.put path, attributes
+              res = conn.put path, attributes.to_json
+
               Hashie::Mash.new JSON.parse(res.body)
             end
 
@@ -140,7 +141,10 @@ module Bullhorn
           if options[:file_methods]
             define_method("put_#{entity}_file") do |id, attributes = {}|
               path = "file/#{name}/#{id}"
-              res = conn.put path, attributes
+              res = conn.put path, attributes.to_json
+
+              puts res.inspect
+
               Hashie::Mash.new JSON.parse(res.body)
             end
 
