@@ -8,7 +8,7 @@ module Bullhorn
 
       # http://developer.bullhorn.com/sites/default/files/BullhornRESTAPI_0.pdf
       module Base
-        DEFAULT_OPTIONS = { fields: 'id', count: 50 }
+        DEFAULT_OPTIONS = { fields: 'id', count: 100 }
 
         def entity
           @entity || self.name.demodulize.underscore
@@ -76,7 +76,7 @@ module Bullhorn
             # Don't see an "all" entities api call. Instead we
             # use a criteria that is always true
             define_method(plural) do |options={}|
-              send "query_#{plural}", where: "id IS NOT NULL"
+              send "query_#{plural}", { where: "id IS NOT NULL" }.merge(options)
             end
           end
 
