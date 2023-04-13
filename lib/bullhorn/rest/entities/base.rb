@@ -143,8 +143,6 @@ module Bullhorn
               path = "file/#{name}/#{id}"
               res = conn.put path, attributes.to_json
 
-              puts res.inspect
-
               Hashie::Mash.new JSON.parse(res.body)
             end
 
