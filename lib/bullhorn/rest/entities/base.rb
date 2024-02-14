@@ -127,7 +127,7 @@ module Bullhorn
 
             define_method("update_#{entity}") do |id, attributes={}|
               path = "entity/#{name}/#{id}"
-              res = conn.post path, attributes
+              res = conn.post path, attributes.to_json
               Hashie::Mash.new JSON.parse(res.body)
             end
 
