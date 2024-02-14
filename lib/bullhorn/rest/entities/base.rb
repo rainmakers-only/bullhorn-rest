@@ -24,10 +24,10 @@ module Bullhorn
             obj.record_count = json['count']
             obj.has_next_page = obj.total? ? ((obj.start + obj.record_count) <= obj.total) : false
 
-            @current_record = @current_record + record_count    
+            @current_record = @current_record + record_count
             obj
           end
-        end 
+        end
 
         def define_methods(options={})
           name = entity.to_s.classify
@@ -39,18 +39,18 @@ module Bullhorn
             define_method("decorate_response") do |res|
               obj = Hashie::Mash.new res
               obj.record_count = res["count"]
-              obj.has_next_page = obj.total? ? ((obj.start + obj.record_count) <= obj.total) : false       
-              obj  
-            end      
+              obj.has_next_page = obj.total? ? ((obj.start + obj.record_count) <= obj.total) : false
+              obj
+            end
 
             define_method("attach_next_page") do |obj, options, path, conn|
               obj.instance_variable_set :@options, options
               obj.instance_variable_set :@path, path
               obj.instance_variable_set :@current_record, 0
               obj.instance_variable_set :@conn, conn
-              obj.instance_eval do class << self; include Decorated_Entity; end; end       
+              obj.instance_eval do class << self; include Decorated_Entity; end; end
               obj
-            end   
+            end
 
             define_method("department_#{plural}") do |options={}|
               params = {:fields => '*', :count => '100'}.merge(options)
@@ -60,7 +60,7 @@ module Bullhorn
               obj = decorate_response JSON.parse(res.body)
 
               attach_next_page obj, options, path, conn
-            end                         
+            end
 
             define_method("user_#{plural}") do |options={}|
               params = {:fields => '*', :count => '100'}.merge(options)
@@ -84,7 +84,7 @@ module Bullhorn
             path = "search/#{name}"
             res = @conn.get path, params
             obj = decorate_response JSON.parse(res.body)
-            attach_next_page obj, options, path, conn    
+            attach_next_page obj, options, path, conn
           end
 
           define_method("query_#{plural}") do |options={}|
@@ -93,7 +93,7 @@ module Bullhorn
             path = "query/#{name}"
             res = @conn.get path, params
             obj = decorate_response JSON.parse(res.body)
-            attach_next_page obj, options, path, conn     
+            attach_next_page obj, options, path, conn
           end
 
           define_method(entity) do |id, options={}|
@@ -119,13 +119,14 @@ module Bullhorn
               if ids = options.delete(:association_ids)
                 path += "/#{ids.to_s}"
               end
-              res = conn.put path, attributes
+              res = conn.put path, attributes.to_json
+
               Hashie::Mash.new JSON.parse(res.body)
             end
 
             define_method("update_#{entity}") do |id, attributes={}|
               path = "entity/#{name}/#{id}"
-              res = conn.post path, attributes
+              res = conn.post path, attributes.to_json
               Hashie::Mash.new JSON.parse(res.body)
             end
 

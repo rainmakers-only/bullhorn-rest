@@ -84,10 +84,18 @@ module Authentication
     }
     params[:ttl] = ttl if ttl
     response = auth_conn.get url, params
-    hash = JSON.parse(response.body)
 
-    self.rest_token = hash['BhRestToken']
-    self.rest_url = hash['restUrl']
+    if response.status == 307
+      uri = URI.parse(response.headers['location'])
+      self.rest_host = uri.host
+
+      login
+    else
+      hash = JSON.parse(response.body)
+
+      self.rest_token = hash['BhRestToken']
+      self.rest_url = hash['restUrl']
+    end
   end
 
   def authenticate
@@ -159,7 +167,7 @@ module Authentication
       end
 
       res
-      
+
     end
 
     # Add rest url and token to the url
