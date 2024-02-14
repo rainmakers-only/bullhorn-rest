@@ -25,6 +25,7 @@ class Client
   include Bullhorn::Rest::Entities::CorporationDepartment
   include Bullhorn::Rest::Entities::Country
   include Bullhorn::Rest::Entities::CustomAction
+  include Bullhorn::Rest::Entities::File
   include Bullhorn::Rest::Entities::JobOrder
   include Bullhorn::Rest::Entities::JobSubmission
   include Bullhorn::Rest::Entities::Note
@@ -49,6 +50,7 @@ class Client
   def initialize(options = {})
 
     @conn = Faraday.new do |f|
+      f.options.timeout = 30
       f.use Middleware, self
       f.response :logger
       f.request :multipart
@@ -62,20 +64,21 @@ class Client
 
   end
 
-  def parse_to_candidate(resume_text)
-      path = "resume/parseToCandidateViaJson?format=text"
-      encodedResume = {"resume" => resume_text}.to_json   
-      res = conn.post path, encodedResume
+  def parse_to_candidate_via_json(resume_text)
+    # Doesn't work?
+    path = "resume/parseToCandidateViaJson?format=text"
+    encodedResume = {"resume" => resume_text}.to_json
+    res = conn.post path, encodedResume
 
-     JSON.parse(res.body)
-  end 
+    JSON.parse(res.body)
+  end
 
   def parse_to_candidate_as_file(format, pop, attributes)
-      path = "resume/parseToCandidate?format=#{format}&populateDescription=#{pop}" 
+      path = "resume/parseToCandidate?format=#{format}&populateDescription=#{pop}"
       attributes['file'] = Faraday::UploadIO.new(attributes['file'], attributes['ct'])
       res = conn.post path, attributes
      JSON.parse(res.body)
-  end 
+  end
 
 
 end

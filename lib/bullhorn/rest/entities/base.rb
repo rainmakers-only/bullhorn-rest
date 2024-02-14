@@ -8,18 +8,19 @@ module Bullhorn
 
       # http://developer.bullhorn.com/sites/default/files/BullhornRESTAPI_0.pdf
       module Base
+        DEFAULT_OPTIONS = { fields: 'id', count: 100 }
+
         def entity
           @entity || self.name.demodulize.underscore
         end
 
         module Decorated_Entity
-          def next_page
+          def next_page(options = DEFAULT_OPTIONS)
             start_param = @current_record + record_count + 1
 
-            params = { :fields => '*', :count => record_count, :start => start_param }.merge(@options)
+            params = { :count => record_count, :start => start_param }.merge(@options)
             res = @conn.get @path, params
             json = JSON.parse(res.body)
-
             obj = Hashie::Mash.new json
             obj.record_count = json['count']
             obj.has_next_page = obj.total? ? ((obj.start + obj.record_count) <= obj.total) : false
@@ -52,8 +53,8 @@ module Bullhorn
               obj
             end
 
-            define_method("department_#{plural}") do |options={}|
-              params = {:fields => '*', :count => '100'}.merge(options)
+            define_method("department_#{plural}") do |options=DEFAULT_OPTIONS|
+              params = DEFAULT_OPTIONS.merge(options)
               path = "department#{name_plural}"
 
               res = @conn.get path, params
@@ -62,8 +63,8 @@ module Bullhorn
               attach_next_page obj, options, path, conn
             end
 
-            define_method("user_#{plural}") do |options={}|
-              params = {:fields => '*', :count => '100'}.merge(options)
+            define_method("user_#{plural}") do |options=DEFAULT_OPTIONS|
+              params = DEFAULT_OPTIONS.merge(options)
               path = "my#{name_plural}"
               res = @conn.get path, params
               obj = decorate_response JSON.parse(res.body)
@@ -75,29 +76,29 @@ module Bullhorn
             # Don't see an "all" entities api call. Instead we
             # use a criteria that is always true
             define_method(plural) do |options={}|
-              send "query_#{plural}", where: "id IS NOT NULL"
+              send "query_#{plural}", { where: "id IS NOT NULL" }.merge(options)
             end
           end
 
-          define_method("search_#{plural}") do |options={}|
-            params = {:fields => '*', :count => '500'}.merge(options)
+          define_method("search_#{plural}") do |options=DEFAULT_OPTIONS|
+            params = DEFAULT_OPTIONS.merge(options)
             path = "search/#{name}"
             res = @conn.get path, params
             obj = decorate_response JSON.parse(res.body)
             attach_next_page obj, options, path, conn
           end
 
-          define_method("query_#{plural}") do |options={}|
+          define_method("query_#{plural}") do |options=DEFAULT_OPTIONS|
             # params = {:fields => '*', :count => '500', :orderBy => 'name'}.merge(options)
-            params = {:fields => '*', :count => '500'}.merge(options)
+            params = DEFAULT_OPTIONS.merge(options)
             path = "query/#{name}"
             res = @conn.get path, params
             obj = decorate_response JSON.parse(res.body)
             attach_next_page obj, options, path, conn
           end
 
-          define_method(entity) do |id, options={}|
-            params = {fields: '*'}.merge(options)
+          define_method(entity) do |id, options=DEFAULT_OPTIONS|
+            params = DEFAULT_OPTIONS.merge(options)
             path = "entity/#{name}/#{Array.wrap(id).join(',')}"
             if assoc = options.delete(:association)
               path += "/#{assoc}"
@@ -140,7 +141,15 @@ module Bullhorn
           if options[:file_methods]
             define_method("put_#{entity}_file") do |id, attributes = {}|
               path = "file/#{name}/#{id}"
-              res = conn.put path, attributes
+              res = conn.put path, attributes.to_json
+
+              Hashie::Mash.new JSON.parse(res.body)
+            end
+
+            define_method("#{entity}_file_attachments") do |id, options=DEFAULT_OPTIONS|
+              params = DEFAULT_OPTIONS.merge(options)
+              path = "entity/#{name}/#{id}/fileAttachments"
+              res = conn.get path, params
               Hashie::Mash.new JSON.parse(res.body)
             end
           end
