@@ -147,7 +147,13 @@ module Bullhorn
           if options[:file_methods]
             define_method("put_#{entity}_file") do |id, attributes = {}|
               path = "file/#{name}/#{id}"
-              res = conn.put path, attributes.to_json
+
+              # res = conn.put path, attributes.to_json
+              res = conn.put path do |req|
+                # Bullhorn seems to check for this header now
+                req.headers['Content-Type'] = 'application/json'
+                req.body = attributes.to_json
+              end
 
               Hashie::Mash.new JSON.parse(res.body)
             end
