@@ -120,7 +120,13 @@ module Bullhorn
               if ids = options.delete(:association_ids)
                 path += "/#{ids.to_s}"
               end
-              res = conn.put path, attributes.to_json
+
+              # res = conn.put path, attributes.to_json
+              res = conn.put path do |req|
+                # Bullhorn seems to check for this header now
+                req.headers['Content-Type'] = 'application/json'
+                req.body = attributes.to_json
+              end
 
               Hashie::Mash.new JSON.parse(res.body)
             end
