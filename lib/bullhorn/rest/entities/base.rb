@@ -133,7 +133,14 @@ module Bullhorn
 
             define_method("update_#{entity}") do |id, attributes={}|
               path = "entity/#{name}/#{id}"
-              res = conn.post path, attributes.to_json
+
+              # res = conn.post path, attributes.to_json
+              res = conn.post path do |req|
+                # Bullhorn seems to check for this header now
+                req.headers['Content-Type'] = 'application/json'
+                req.body = attributes.to_json
+              end
+
               Hashie::Mash.new JSON.parse(res.body)
             end
 
